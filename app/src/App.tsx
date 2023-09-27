@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { ChatService } from './services/chat-service';
 import InputMessage from './components/InputMessage';
+import { MessageBox } from 'react-chat-elements'
+import * as uuid from "uuid";
 
 const chatService = new ChatService();
 let messages : string[] = []
@@ -21,27 +23,52 @@ function App() {
 
     chatService.onClose.subscribe(x => {
       setConnected(false);
+      console.log(x);
+      
     })
     
   }
 
   return (
     <>
-      <div className="card">
-        <button onClick={() => !connected ? chat() : void 0} disabled={connected}>
-          Connect chat
-        </button>
 
-        <span style={{marginLeft: '1rem'}}>
-          {connected ? "Conectado" : "Desconectado"}
-        </span>
-      </div>
 
-      <div className="card">
-        <InputMessage onEnter={(message) => {
-          console.log(message);
-          chatService.sendMessage(message)
-          }}></InputMessage>
+      <div style={{height: "90vh", display: "flex", width: "100%", justifyContent: "center",}}>
+
+        <div style={{height: "100%", width: "50%", display: "flex", flexDirection: "column", justifyContent:"space-between"}}>
+          <div className="card" style={{display: "flex", width: "max-content", alignItems: "center"}}>
+            <button onClick={() => !connected ? chat() : void 0} disabled={connected}>
+              Connect chat
+            </button>
+            <button onClick={() => connected ? chatService.disconnectChat() : void 0} disabled={!connected}>
+              Disconnect chat
+            </button>
+
+            <span style={{marginLeft: '1rem'}}>
+              {connected ? "Conectado" : "Desconectado"}
+            </span>
+          </div>
+
+          <div className='card'>
+            {messages.map((x, i) => {
+              return (
+                <>
+                  <MessageBox key={uuid.v4()}
+                    id={Date.now() * i} focus={true} titleColor={'#333'} forwarded={true} notch={true} removeButton={false} replyButton={true} status={'waiting'} 
+                    retracted={true} position={"left"} type={"text"} title={""} text={x} date={new Date()}
+                  />
+                </>
+              )
+            })}
+          </div>
+
+          <div className="card">
+            <InputMessage onEnter={(message) => {
+              chatService.sendMessage(message)
+              }}></InputMessage>
+          </div>
+        </div>
+
       </div>
       
     </>

@@ -4,10 +4,11 @@ import { endpoints } from "../env/environment";
 export class ChatService {
 
     private socket!: WebSocket;
-    private isConnect: boolean = false;
+    private maxCloseTimeoutMilisBase100 = 100;
+    public _isConnect: boolean = false;
     private _onClose: Subject<CloseEvent> = new Subject();
     private _onMessage: Subject<string> = new Subject<string>();
-    private messages: BehaviorSubject<string[]> = new BehaviorSubject([`${new Date().toISOString()} - Chat iniciado`]);
+    private _messages: BehaviorSubject<string[]> = new BehaviorSubject([`${new Date().toISOString()} - Chat iniciado`]);
 
     get onMessage() {
         return this._onMessage.asObservable();
@@ -17,11 +18,21 @@ export class ChatService {
         return this._onClose.asObservable();
     }
 
-    async connectChat() {
+    get isConnect() {
+        return this._isConnect;
+    }
+
+    get messages() {
+        return this._messages.getValue();
+    }
+
+    public async connectChat() {
         return new Promise<Observable<string>>((res, rej) => {
             this.socket = new WebSocket(endpoints.apiWs + "/chat");
 
             this.socket.onmessage = (ev) => {
+                console.log(ev);
+                
                 this._onMessage.next(ev.data);
             }
 
@@ -36,7 +47,34 @@ export class ChatService {
         });
     }
 
-    sendMessage(content: string) {
+    public async disconnectChat() {
+        return new Promise((res, rej) => {
+            try {
+                this.socket.close();
+                let timeout = 0;
+                let timer = setInterval(() => {
+                    if (this.socket.readyState === this.socket.CLOSED) {
+                        clearInterval(timer);
+                        res(true);
+                    }
+
+                    timeout++;
+
+                    if (timeout >= this.maxCloseTimeoutMilisBase100) {
+                        clearInterval(timer);
+                        throw new Error("Timeout to close websocket connection");
+                    }
+                }, this.maxCloseTimeoutMilisBase100);
+
+            } catch (error) {
+                rej(error)
+            } finally {
+                this._isConnect = false;
+            }
+        })
+    }
+
+    public sendMessage(content: string) {
         this.socket.send(content);
     }
 
