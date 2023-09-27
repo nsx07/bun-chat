@@ -17,9 +17,13 @@ const server = serve({
       console.log(message);
       
       ws.sendText(getUsername(ws) + " " + message.toString())
+      ws.publishText("chat", getUsername(ws) + " " + message.toString())
+      
     },
     open(ws) {
       ws.subscribe("chat")
+      console.log(getUsername(ws) + " Connected");
+      
       ws.sendText(getUsername(ws) + " Connected")
     },
     close(ws, code, message) {
