@@ -4,12 +4,15 @@ import InputMessage from './components/InputMessage';
 import { MessageBox } from 'react-chat-elements'
 import { v4 as uuidv4 } from 'uuid';
 
-
 const chatService = new ChatService();
-let messages : string[] = []
+const myMessages: string[] = [];
+
+function itsMy(men:string) {
+  return myMessages.includes(men);
+}
 
 function App() {
-  const [message, setMessage] = useState<string[]|null>(null);
+  let [message, setMessage] = useState<string[]>([]);
   const [connected, setConnected] = useState(false);
 
   async function chat() {
@@ -18,16 +21,13 @@ function App() {
     setConnected(true);
 
     chatService.onMessage.subscribe(x => {
-      messages.push(x)
-      setMessage(messages);
-      console.log(messages);
-      
+      message = [...message, x]
+      setMessage(message);
     })
 
     chatService.onClose.subscribe(x => {
       setConnected(false);
-      console.log(x);
-      
+    
     })
     
   }
@@ -48,12 +48,12 @@ function App() {
             </span>
           </div>
 
-          <div className='card'>
-            {message && message.map((x, i) => {
+          <div className='card' style={{display: "flex", flexDirection:"column", width: "100%", gap: "0.3rem"}}>
+            {message && message.map((x) => {
               const key = uuidv4();
               
               return (
-                <div key={key}>
+                <div key={`${key}`} >
                   <MessageBox
                       id={key}
                       focus={true}
@@ -64,7 +64,7 @@ function App() {
                       replyButton={true}
                       status={'waiting'}
                       retracted={true}
-                      position={"left"}
+                      position={itsMy(x) ? "right" : "left"}
                       type={"text"}
                       title={""}
                       text={x}
@@ -76,7 +76,10 @@ function App() {
           </div>
 
           <div className="card">
-            <InputMessage  onEnter={(message) => chatService.sendMessage(message)}></InputMessage>
+            <InputMessage  onEnter={(message) => {
+              myMessages.push(message)
+              chatService.sendMessage(message)
+            }}></InputMessage>
             
           </div>
         </div>
