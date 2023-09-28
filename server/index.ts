@@ -16,8 +16,8 @@ const server = serve({
     message(ws, message) {
       console.log(message);
       
-      ws.sendText(getUsername(ws) + " " + message.toString())
-      ws.publishText("chat", getUsername(ws) + " " + message.toString())
+      ws.sendText(message.toString())
+      ws.publishText("chat", message.toString())
       
     },
     open(ws) {

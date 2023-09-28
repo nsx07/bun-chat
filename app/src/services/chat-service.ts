@@ -31,8 +31,6 @@ export class ChatService {
             this.socket = new WebSocket(endpoints.apiWs + "/chat");
 
             this.socket.onmessage = (ev) => {
-                console.log(ev);
-                
                 this._onMessage.next(ev.data);
             }
 

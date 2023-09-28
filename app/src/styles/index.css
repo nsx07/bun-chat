@@ -23,6 +23,10 @@ body {
   margin: 0;
 }
 
+body:nth-child(1) {
+  overflow: hidden;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

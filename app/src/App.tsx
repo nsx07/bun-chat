@@ -5,14 +5,12 @@ import { MessageBox } from 'react-chat-elements'
 import { v4 as uuidv4 } from 'uuid';
 
 const chatService = new ChatService();
-const myMessages: string[] = [];
 
-function itsMy(men:string) {
-  return myMessages.map(x => x.substring(x.indexOf(" "))).some(x => men === men);
-}
+
 
 function App() {
   let [message, setMessage] = useState<string[]>([]);
+  let [myMessage, setMyMessage] = useState<string[]>([]);
   let [connected, setConnected] = useState(false);
 
   async function chat() {
@@ -21,6 +19,8 @@ function App() {
     setConnected(true);
 
     chatService.onMessage.subscribe(x => {
+      console.log(x);
+      
       message = [...message, x]      
       setMessage(message);
     })
@@ -29,6 +29,16 @@ function App() {
       setConnected(false);
     })
     
+  }
+
+  function handlePress(message: string) {
+    myMessage = [...myMessage, message];
+    setMyMessage(myMessage);
+    chatService.sendMessage(message)
+  }
+
+  function itsMy(men:string) {
+    return myMessage.includes(men);
   }
 
   return (
@@ -48,26 +58,26 @@ function App() {
             </div>
 
             <div style={styles.message}>
-              {message && message.map((x) => {
+              {message && message.map((x, i) => {
                 const key = uuidv4();
                 
                 return (
-                  <div key={`${key}`} >
+                  <div key={`${key}`} style={{accentColor:"GrayText", color: "#1f1f1f"}}>
                     <MessageBox
                         id={key}
-                        focus={false}
-                        titleColor={'#333'}
-                        forwarded={true}
+                        text={x}
+                        title={x}
                         notch={true}
-                        removeButton={false}
-                        replyButton={true}
-                        status={'sent'}
-                        retracted={true}
-                        position={itsMy(x) ? "right" : "left"}
+                        focus={false}
                         type={"text"}
-                        title={x.substring(0, x.indexOf(" "))}
-                        text={x.substring(x.indexOf(" "))}
+                        status={'sent'}
+                        forwarded={true}
+                        retracted={true}
                         date={new Date()}
+                        replyButton={true}
+                        titleColor={'#333'}
+                        removeButton={false}
+                        position={itsMy(x) ? "right" : "left"}
                       />
                   </div>
                 )
@@ -75,11 +85,7 @@ function App() {
             </div>
 
             <div style={styles.input}>
-              <InputMessage  onEnter={(message) => {
-                myMessages.push(message)
-                chatService.sendMessage(message)
-              }}></InputMessage>
-              
+              <InputMessage  onEnter={(message) => handlePress(message)} disabled={!connected}></InputMessage>
             </div>
             
           </div>
@@ -99,7 +105,8 @@ const styles : Record<string, CSSProperties>= {
     justifyContent:"center"
   },
   chat: {
-    // width: "50%",
+    width: "max-content",
+    maxWidth: "100%",
     // padding:"1rem",
     height: "100%",
     position: "relative"
@@ -120,5 +127,6 @@ const styles : Record<string, CSSProperties>= {
     
   },
   input: {
+    width: "100%"
   }
 }

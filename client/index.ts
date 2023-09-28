@@ -16,9 +16,9 @@ let messages: string[] = [];
 
 const write = (msg: string | Buffer) => {
   messages.push(msg.toLocaleString());
-  messages.forEach(x => {
-    rl.write(myMessages.some(y => y.includes(x)) ? `\t${x}\n` : `${x}\n`)
-  })
+  // messages.forEach(x => {
+  //   rl.write(myMessages.some(y => y.includes(x)) ? `\t${x}\n` : `${x}\n`)
+  // })
 }
 
 async function menuLoop() {
