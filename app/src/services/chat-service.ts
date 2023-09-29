@@ -1,6 +1,7 @@
 import { BehaviorSubject, Observable, Subject } from "rxjs";
 import { endpoints } from "../env/environment";
 import { v4 } from "uuid"
+import { Message } from "../model/message";
 
 export class ChatService {
 
@@ -8,8 +9,8 @@ export class ChatService {
     private maxCloseTimeoutMilisBase100 = 100;
     public _isConnect: boolean = false;
     private _onClose: Subject<CloseEvent> = new Subject();
-    private _onMessage: Subject<string> = new Subject<string>();
-    private _messages: BehaviorSubject<string[]> = new BehaviorSubject([`${new Date().toISOString()} - Chat iniciado`]);
+    private _onMessage: Subject<Message> = new Subject<Message>();
+    private _messages: BehaviorSubject<Message[]> = new BehaviorSubject(new Array<Message>());
 
     get onMessage() {
         return this._onMessage.asObservable();
@@ -27,6 +28,10 @@ export class ChatService {
         return this._messages.getValue();
     }
 
+    public currentUsername() {
+        return sessionStorage.getItem("username");
+    }
+
     private get params() {
         let username = sessionStorage.getItem("username");
 
@@ -35,24 +40,24 @@ export class ChatService {
             sessionStorage.setItem("username", username)
         }
 
-        return encodeURI(`username=${username}`);
+        return "?" + encodeURI(`username=${username}`);
     }
 
     public async connectChat() {
-        return new Promise<Observable<string>>((res, rej) => {
-            this.socket = new WebSocket(endpoints.apiWs + "/chat" + this.params);
+        return new Promise<Observable<Message>>((res, rej) => {
+            try {
+                this.socket = new WebSocket(endpoints.apiWs + "/chat" + this.params);
+                
+                this.socket.onopen = () => res(this.onMessage)
+                this.socket.onclose = (ev) => this._onClose.next(ev)
+                this.socket.onmessage = (ev) => {
+                    console.log(ev);
+                    
+                    this._onMessage.next(JSON.parse(ev.data))
+                }
 
-            this.socket.onmessage = (ev) => {
-                this._onMessage.next(ev.data);
-            }
-
-            this.socket.onopen = (ev) => {
-                res(this.onMessage)
-                return;
-            }
-
-            this.socket.onclose = (ev) => {
-                this._onClose.next(ev);
+            } catch (error) {
+                rej(error)
             }
         });
     }

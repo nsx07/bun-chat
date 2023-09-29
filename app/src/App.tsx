@@ -4,14 +4,14 @@ import InputMessage from './components/InputMessage';
 import { MessageBox } from 'react-chat-elements'
 import { v4 as uuidv4 } from 'uuid';
 import "./styles/index.css";
+import { Message } from './model/message';
 
 const chatService = new ChatService();
 
 
 
 function App() {
-  let [message, setMessage] = useState<string[]>([]);
-  let [myMessage, setMyMessage] = useState<string[]>([]);
+  let [message, setMessage] = useState<Message[]>([]);
   let [connected, setConnected] = useState(false);
 
   async function chat() {
@@ -33,13 +33,11 @@ function App() {
   }
 
   function handlePress(message: string) {
-    myMessage = [...myMessage, message];
-    setMyMessage(myMessage);
     chatService.sendMessage(message)
   }
 
-  function itsMy(men:string) {
-    return myMessage.includes(men);
+  function itsMy(user:string) {
+    return user === chatService.currentUsername();
   }
 
   return (
@@ -68,19 +66,19 @@ function App() {
                     <div key={`${key}`} style={{accentColor:"GrayText", color: "#1f1f1f"}}>
                       <MessageBox
                           id={key}
-                          text={x}
-                          title={x}
+                          text={x.text}
+                          title={x.username}
                           notch={true}
                           focus={false}
                           type={"text"}
                           status={'sent'}
                           forwarded={true}
                           retracted={true}
-                          date={new Date()}
+                          date={x.date}
                           replyButton={true}
                           titleColor={'#333'}
                           removeButton={false}
-                          position={itsMy(x) ? "right" : "left"}
+                          position={itsMy(x.username) ? "right" : "left"}
                         />
                     </div>
                   )
