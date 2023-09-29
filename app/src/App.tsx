@@ -1,8 +1,9 @@
-import { CSSProperties, useState } from 'react'
+import { useState } from 'react'
 import { ChatService } from './services/chat-service';
 import InputMessage from './components/InputMessage';
 import { MessageBox } from 'react-chat-elements'
 import { v4 as uuidv4 } from 'uuid';
+import "./styles/index.css";
 
 const chatService = new ChatService();
 
@@ -25,7 +26,7 @@ function App() {
       setMessage(message);
     })
 
-    chatService.onClose.subscribe(x => {
+    chatService.onClose.subscribe(() => {
       setConnected(false);
     })
     
@@ -43,9 +44,10 @@ function App() {
 
   return (
     <>
-        <div style={styles.wrapper}>
-          <div style={styles.chat}>
-            <div style={styles.header}>
+        <div className='w-screen h-screen relative bg-slate-700 flex justify-center'>
+          <div className='w-1/2 relative'>
+
+            <div className='absolute top-0 w-full bg-slate-950 text-slate-50 p-2 h-8'>
               <button onClick={() => !connected ? chat() : void 0} disabled={connected}>
                 Connect chat
               </button>
@@ -57,34 +59,36 @@ function App() {
               </span>
             </div>
 
-            <div style={styles.message}>
-              {message && message.map((x, i) => {
-                const key = uuidv4();
-                
-                return (
-                  <div key={`${key}`} style={{accentColor:"GrayText", color: "#1f1f1f"}}>
-                    <MessageBox
-                        id={key}
-                        text={x}
-                        title={x}
-                        notch={true}
-                        focus={false}
-                        type={"text"}
-                        status={'sent'}
-                        forwarded={true}
-                        retracted={true}
-                        date={new Date()}
-                        replyButton={true}
-                        titleColor={'#333'}
-                        removeButton={false}
-                        position={itsMy(x) ? "right" : "left"}
-                      />
-                  </div>
-                )
-              })}
+            <div className='h-screen w-full py-8 overflow-y-auto overflow-x-hidden'>
+              <div className='w-full py-2'>
+                {message && message.map((x) => {
+                  const key = uuidv4();
+                  
+                  return (
+                    <div key={`${key}`} style={{accentColor:"GrayText", color: "#1f1f1f"}}>
+                      <MessageBox
+                          id={key}
+                          text={x}
+                          title={x}
+                          notch={true}
+                          focus={false}
+                          type={"text"}
+                          status={'sent'}
+                          forwarded={true}
+                          retracted={true}
+                          date={new Date()}
+                          replyButton={true}
+                          titleColor={'#333'}
+                          removeButton={false}
+                          position={itsMy(x) ? "right" : "left"}
+                        />
+                    </div>
+                  )
+                })}
+              </div>
             </div>
 
-            <div style={styles.input}>
+            <div className='absolute bottom-0 w-full'>
               <InputMessage  onEnter={(message) => handlePress(message)} disabled={!connected}></InputMessage>
             </div>
             
@@ -95,38 +99,3 @@ function App() {
 }
 
 export default App
-
-const styles : Record<string, CSSProperties>= {
-  wrapper: {
-    width: "100vw",
-    height: "100vh",
-    position:"relative",
-    display: "flex",
-    justifyContent:"center"
-  },
-  chat: {
-    width: "max-content",
-    maxWidth: "100%",
-    // padding:"1rem",
-    height: "100%",
-    position: "relative"
-  },
-  header: {
-    position:'sticky',
-    background: "#1f1f1f",
-    zIndex: 1001,
-    height: "2vh",
-    // top: "0",
-    // left: "0"
-  },
-  message: {
-    height: "90vh",
-    overflowX:'hidden',
-    overflowY: 'auto',
-    scrollBehavior: "smooth",
-    
-  },
-  input: {
-    width: "100%"
-  }
-}
