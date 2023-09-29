@@ -1,5 +1,6 @@
 import { BehaviorSubject, Observable, Subject } from "rxjs";
 import { endpoints } from "../env/environment";
+import { v4 } from "uuid"
 
 export class ChatService {
 
@@ -26,9 +27,20 @@ export class ChatService {
         return this._messages.getValue();
     }
 
+    private get params() {
+        let username = sessionStorage.getItem("username");
+
+        if (!username) {
+            username = v4()
+            sessionStorage.setItem("username", username)
+        }
+
+        return encodeURI(`username=${username}`);
+    }
+
     public async connectChat() {
         return new Promise<Observable<string>>((res, rej) => {
-            this.socket = new WebSocket(endpoints.apiWs + "/chat");
+            this.socket = new WebSocket(endpoints.apiWs + "/chat" + this.params);
 
             this.socket.onmessage = (ev) => {
                 this._onMessage.next(ev.data);

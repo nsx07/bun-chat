@@ -5,6 +5,7 @@ const server = serve({
     // upgrade the request to a WebSocket
     
     let username = Date.now() * Math.sqrt((Math.random() * Math.random() / Math.PI))
+    req.credentials
     
     if (server.upgrade(req, {data: {username: username}})) {
 
