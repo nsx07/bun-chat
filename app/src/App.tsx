@@ -3,6 +3,7 @@ import { ChatService } from './services/chat-service';
 import InputMessage from './components/InputMessage';
 import { MessageBox } from 'react-chat-elements'
 import { v4 as uuidv4 } from 'uuid';
+import "./styles/index.css";
 
 const chatService = new ChatService();
 
@@ -43,9 +44,10 @@ function App() {
 
   return (
     <>
-        <div style={styles.wrapper}>
-          <div style={styles.chat}>
-            <div style={styles.header}>
+        <div className='w-screen h-screen bg-slate-700 flex justify-center'>
+          <div className='w-1/2'>
+
+            <div>
               <button onClick={() => !connected ? chat() : void 0} disabled={connected}>
                 Connect chat
               </button>
@@ -57,8 +59,8 @@ function App() {
               </span>
             </div>
 
-            <div style={styles.message}>
-              {message && message.map((x, i) => {
+            <div>
+              {message && message.map((x) => {
                 const key = uuidv4();
                 
                 return (
@@ -84,7 +86,7 @@ function App() {
               })}
             </div>
 
-            <div style={styles.input}>
+            <div>
               <InputMessage  onEnter={(message) => handlePress(message)} disabled={!connected}></InputMessage>
             </div>
             
@@ -95,38 +97,3 @@ function App() {
 }
 
 export default App
-
-const styles : Record<string, CSSProperties>= {
-  wrapper: {
-    width: "100vw",
-    height: "100vh",
-    position:"relative",
-    display: "flex",
-    justifyContent:"center"
-  },
-  chat: {
-    width: "max-content",
-    maxWidth: "100%",
-    // padding:"1rem",
-    height: "100%",
-    position: "relative"
-  },
-  header: {
-    position:'sticky',
-    background: "#1f1f1f",
-    zIndex: 1001,
-    height: "2vh",
-    // top: "0",
-    // left: "0"
-  },
-  message: {
-    height: "90vh",
-    overflowX:'hidden',
-    overflowY: 'auto',
-    scrollBehavior: "smooth",
-    
-  },
-  input: {
-    width: "100%"
-  }
-}
