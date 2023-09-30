@@ -18,9 +18,15 @@ function InputMessage({onEnter, disabled, placeholder, ref, onChange}: Props) {
   function trigger(key: React.KeyboardEvent) {
     ref = value;
     if (key.code === "Enter" && onEnter) {
-      onEnter(value);
-      setValue("");
+      dispatchValue();
       onChange_();
+    }
+  }
+
+  function dispatchValue() {
+    if (onEnter) {
+      setValue(""); 
+      onEnter(value);
     }
   }
 
@@ -50,7 +56,7 @@ function InputMessage({onEnter, disabled, placeholder, ref, onChange}: Props) {
          'text-slate-600': !disabled,
          'text-gray-500': disabled
        })}>
-        <ArrowCircleRight size={28} onClick={() => onEnter && onEnter(value)}/>
+        <ArrowCircleRight size={28} onClick={() => dispatchValue()}/>
        </div>
     </div>
 
