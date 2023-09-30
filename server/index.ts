@@ -1,4 +1,4 @@
-import { ServerWebSocket, serve } from "bun";
+import { ServerWebSocket, env, serve } from "bun";
 import { Message } from "./model/message";
 
 const encoder = new TextEncoder()
@@ -43,7 +43,7 @@ const server = serve({
       ws.unsubscribe("chat")
     },
   },
-  port: 4000
+  port: env["PORT"] ?? 3000
 });
 
 const getUsername = (ws: ServerWebSocket<any>) => ws.data.username
