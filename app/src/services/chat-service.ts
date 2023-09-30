@@ -67,6 +67,11 @@ export class ChatService {
     }
 
     public async disconnectChat() {
+        if (!this.socket) {
+            return;
+        }
+
+
         return new Promise((res, rej) => {
             try {
                 this.socket.close();
@@ -95,6 +100,22 @@ export class ChatService {
 
     public sendMessage(content: string) {
         this.socket.send(content);
+    }
+
+    public testName(name: string) {
+        return new Promise<boolean>((res, rej) => {
+
+            fetch(endpoints.apiHttp + "/testName?username=" + name)
+                .then(result => result.json())
+                .then(x => {
+                    if (x.inUse) {
+                        res(false)
+                    } else {
+                        res(true)
+                    }
+                })
+
+        })  
     }
 
 }

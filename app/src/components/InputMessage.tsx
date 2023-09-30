@@ -45,7 +45,7 @@ function InputMessage({onEnter, disabled, placeholder, ref, onChange}: Props) {
     <>        
     <div className="relative flex items-center max-w-full py-2 pl-4 pr-2 rounded-lg bg-white border-gray-300">
       <textarea onLoad={() => setRows(1)} onKeyUpCapture={(x) => onChange_(x)} rows={rows} style={{'scrollbarWidth': 'thin'}} className="resize-none border-transparent bg-transparent flex-1 appearance-none border text-gray-700 placeholder-gray-400 text-base focus:outline-none focus:ring-0 focus:ring-purple-600 focus:border-transparent"
-       disabled={disabled} placeholder={placeholder ?? "Type here..."} value={value} onChange={(x) => setValue(x.target.value)} onKeyUp={(x) => trigger(x)}/>
+       disabled={disabled} placeholder={placeholder ?? "Type here..."} value={value} onChange={(x) => setValue(x.target.value.replace("\n", ""))} onKeyUp={(x) => trigger(x)}/>
        <div className={clsx("rounded-lg right-1 cursor-pointer", {
          'text-slate-600': !disabled,
          'text-gray-500': disabled

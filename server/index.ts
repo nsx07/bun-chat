@@ -2,6 +2,7 @@ import { ServerWebSocket, env, serve } from "bun";
 import { Message } from "./model/message";
 
 const encoder = new TextEncoder()
+const connected = new Map<string, ServerWebSocket<any>>()
 
 const server = serve({
   async fetch(req, server) {
@@ -9,13 +10,33 @@ const server = serve({
     let url = new URL(req.url);
     console.log(url.pathname);
     
-
+    
     if (url.pathname === "/chat") {
       let username = url.searchParams.get("username")
+
+      if (connected.has(username)) {
+        console.log(username + "Already Connected");
+        return new Response("User already connected :(", { status: 500 });
+      } else {
+        connected.set(username, null)
+        console.log(username + " Connected");
+      }
+
       if (server.upgrade(req, {data: {username: username}})) {
         return;
       }
       return new Response("Upgrade failed :(", { status: 500 });
+    }
+
+    if (url.pathname === "/testName") {
+      return new Response(JSON.stringify({inUse: connected.has(url.searchParams.get("username"))}), 
+      { 
+        status: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
+        }
+      });
     }
 
     if (url.pathname === "/") {
@@ -38,10 +59,15 @@ const server = serve({
     },
     open(ws) {
       ws.subscribe("chat")
-      console.log(getUsername(ws) + " Connected");
+
+      let username = getUsername(ws)
+
+
+
     },
     close(ws, code, message) {
-      ws.sendText(getUsername(ws) + "Disconnected")
+      let username = getUsername(ws)
+      connected.delete(username)
       ws.unsubscribe("chat")
     },
   },
