@@ -5,15 +5,21 @@ const encoder = new TextEncoder()
 
 const server = serve({
   async fetch(req, server) {
-    // upgrade the request to a WebSocket
-    
-    let username = new URL(req.url).searchParams.get("username")
-    
-    if (server.upgrade(req, {data: {username: username}})) {
 
-      return; // do not return a Response
+    let url = new URL(req.url);
+
+    if (url.pathname === "/chat") {
+      let username = url.searchParams.get("username")
+      if (server.upgrade(req, {data: {username: username}})) {
+        return;
+      }
+      return new Response("Upgrade failed :(", { status: 500 });
     }
-    return new Response("Upgrade failed :(", { status: 500 });
+
+    if (url.pathname === "/") {
+      return new Response("Hello World!", { status: 200 });
+    }
+      
   },
   websocket: {
     message(ws, messageText) {
@@ -36,9 +42,10 @@ const server = serve({
       ws.sendText(getUsername(ws) + "Disconnected")
       ws.unsubscribe("chat")
     },
-  }
+  },
+  port: 4000
 });
 
 const getUsername = (ws: ServerWebSocket<any>) => ws.data.username
 
-console.log(`Listening on localhost:${server.port}`);
+console.log(`Listening on ${server.hostname}:${server.port}`);

@@ -51,9 +51,13 @@ export class ChatService {
                 this.socket.onopen = () => res(this.onMessage)
                 this.socket.onclose = (ev) => this._onClose.next(ev)
                 this.socket.onmessage = (ev) => {
-                    console.log(ev);
-                    
-                    this._onMessage.next(JSON.parse(ev.data))
+                    let data: Message;
+                    try {
+                        data = JSON.parse(ev.data)
+                        this._onMessage.next(data);
+                    } catch (error) {
+                        console.error("Error parsing message", ev.data)
+                    }
                 }
 
             } catch (error) {
