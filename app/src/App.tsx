@@ -1,21 +1,27 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ChatService } from './services/chat-service';
 import InputMessage from './components/InputMessage';
-import { MessageBox } from 'react-chat-elements'
+import { MessageBox, SystemMessage } from 'react-chat-elements'
 import { v4 as uuidv4 } from 'uuid';
-import "./styles/index.css";
-import { Message } from './model/message';
+import { Message, MessageType } from './model/message';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Circle, Person } from 'phosphor-react';
+import { Person, X } from 'phosphor-react';
+import * as Toast from '@radix-ui/react-toast';
+import * as rw from "random-words"
+import "./styles/index.css";
 import clsx from 'clsx';
 
 const chatService = new ChatService();
+const generateName = () => {
+  return rw.generate(2).join("-")
+}
 
 function App() {
   let [username, setUsername] = useState<string>(chatService.currentUsername()!);
+  let [resetUser, setResetUser] = useState(username && username != "");
   let [message, setMessage] = useState<Message[]>([]);
   let [connected, setConnected] = useState(false);
-  let [resetUser, setResetUser] = useState(username && username != "");
+  let [openToast, setOpenToast] = useState(false);
   let [open, setOpen] = useState(true);
 
   async function chat() {
@@ -41,21 +47,22 @@ function App() {
   }
 
   function itsMy(user:string) {
-    console.log(user.length, username.length, user, username );
-    
     return user === username;
   }
 
   useEffect(() => {
-    return (() => {
-      // if (connected) {
-      //   chatService.disconnectChat();
-      // }
-    })
-  })
+    // Alguma inicialização
+
+    return () => {
+      // Realize ações de limpeza quando o componente for desmontado
+      // Por exemplo, cancelar assinaturas, liberar recursos, etc.
+      if (chatService && connected) {
+        chatService.disconnectChat();
+      }
+    };
+  }, []);
 
   function saveUsername(name: string) {
-    
     chatService.testName(name).then(x => {
       if (x) {
         sessionStorage.setItem("username", name.trimEnd());
@@ -64,7 +71,7 @@ function App() {
           setOpen(false);
         });
       } else {
-        alert("Username already exists");
+        setOpenToast(true);
       }
     });
 
@@ -72,7 +79,7 @@ function App() {
 
   return (
     <>
-        <div className='isolate overflow-hidden w-screen h-screen relative bg-slate-950 flex justify-center'>
+        <div className='isolate w-screen h-screen relative bg-slate-950 flex justify-center'>
           
           <div className="absolute inset-x-0 top-[-10rem] -z-9 transform-gpu overflow-hidden blur-3xl sm:top-[-20rem] max-h-screen" aria-hidden="true">
             <div className="relative right-1/2 -z-10 aspect-[1155/678] w-[36.125rem] max-w-none -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#00adb4] to-[#00adb4] opacity-30 sm:left-[calc(50%-40rem)] sm:w-[72.1875rem]" style={{clipPath: 'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)'}} ></div>
@@ -106,39 +113,61 @@ function App() {
             
             </div>
 
-            <div className="h-screen overflow-hidden">
-              <div className='h-full w-full py-2 overflow-y-auto overflow-x-hidden scroll-my-8'>
+            <div className="h-[calc(100vh-6rem)] p-2 overflow-auto">
+              <div className='h-full w-full overflow-y-auto overflow-x-hidden'>
                 <div className='w-full'>
                   {message && message.map((x) => {
                     const key = uuidv4();
                     
                     return (
                       <div key={`${key}`}>
-                        <MessageBox
-                            id={key}
-                            text={x.text}
-                            notch={true}
-                            
-                            focus={false}
-                            type={"text"}
-                            date={x.date}
-                            status={'sent'}
-                            forwarded={false}
-                            retracted={false}
-                            title={x.username}
-                            replyButton={false}
-                            titleColor={'#000'}
-                            removeButton={false}
-                            position={itsMy(x.username) ? "right" : "left"}
-                          />
+
+                        {x.type === MessageType.TEXT ? (
+                          <MessageBox
+                              id={key}
+                              text={x.text}
+                              notch={true}
+                              
+                              focus={false}
+                              type={"text"}
+                              date={x.date}
+                              status={'sent'}
+                              forwarded={false}
+                              retracted={false}
+                              title={x.username}
+                              replyButton={false}
+                              titleColor={'#000'}
+                              removeButton={false}
+                              position={itsMy(x.username) ? "right" : "left"}
+                            />
+                          ) : (
+                          <SystemMessage 
+                              id={key}
+                              notch={true}
+                              text={x.text}
+                              focus={false}
+                              type={"text"}
+                              date={x.date}
+                              status={'sent'}
+                              forwarded={false}
+                              retracted={false}
+                              title={x.username}
+                              replyButton={false}
+                              titleColor={'#000'}
+                              removeButton={false}
+                              position={"center"}/>
+                          )}
+
+
                       </div>
+                      
                     )
                   })}
                 </div>
               </div>
             </div>
 
-            <div className='sticky bottom-0 w-full p-2 bg-opacity-50 bg-slate-'>
+            <div className='absolute bottom-0 w-full p-2 bg-opacity-50 bg-slate-'>
               <InputMessage onEnter={(message) => handlePress(message)} disabled={!connected}></InputMessage>
             </div>
             
@@ -150,9 +179,24 @@ function App() {
 
         </div>
 
+        <Toast.Provider swipeDirection="right">
+          <Toast.Root className="ToastRoot bg-opacity-50 bg-red-600" open={openToast} onOpenChange={setOpenToast}>
+            <Toast.Title className="ToastTitle">
+              Username already in use
+            </Toast.Title>
+            <Toast.Description asChild>
+              <p className="ToastDescription">
+                Try another username, what about <code>{rw.generate(2).join("-")}?</code>
+              </p>
+            </Toast.Description>
+          </Toast.Root>
+          <Toast.Viewport className="ToastViewport" />
+        </Toast.Provider>
+
         <Dialog.Root open={open} onOpenChange={() => username && username != "" ? saveUsername(username): void 0} modal={true}>
             <Dialog.Portal >
               <Dialog.DialogOverlay className="w-screen h-screen bg-black/80 fixed inset-0 cursor-not-allowed" onClick={(x) => x.preventDefault()}/>
+
               <Dialog.DialogContent className="absolute p-6 bg-zinc-900 rounded-2xl w-full max-w-md top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
                 
                 <Dialog.DialogTitle className="text-3xl mb-3 leading-tight text-slate-200 font-extrabold">
@@ -176,7 +220,7 @@ function App() {
                   )
                   : (
                       <>
-                        <InputMessage onChange={(x) => setUsername(x)} onEnter={x => saveUsername(x)} placeholder='Username'></InputMessage>
+                        <InputMessage initialValue={generateName()} onEnter={x => saveUsername(x)} placeholder='Username'></InputMessage>
                       </>
                   )
                 }

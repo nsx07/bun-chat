@@ -1,5 +1,5 @@
 import { ServerWebSocket, env, serve } from "bun";
-import { Message } from "./model/message";
+import { Message, MessageType } from "./model/message";
 
 const encoder = new TextEncoder()
 const connected = new Map<string, ServerWebSocket<any>>()
@@ -17,9 +17,6 @@ const server = serve({
       if (connected.has(username)) {
         console.log(username + "Already Connected");
         return new Response("User already connected :(", { status: 500 });
-      } else {
-        connected.set(username, null)
-        console.log(username + " Connected");
       }
 
       if (server.upgrade(req, {data: {username: username}})) {
@@ -49,6 +46,7 @@ const server = serve({
       
       let message: Message = {
         date: new Date(),
+        type: MessageType.TEXT,
         text: messageText.toString(),
         username: getUsername(ws)
       }
@@ -61,14 +59,37 @@ const server = serve({
       ws.subscribe("chat")
 
       let username = getUsername(ws)
+      let message: Message = {
+        date: new Date(),
+        type: MessageType.INFO,
+        text: `${username} has joined the chat`,
+        username: getUsername(ws)
+      }
 
-
-
+      ws.publish("chat", JSON.stringify(message));
+      connected.set(username, ws);
+      console.log(username + " Connected");
     },
-    close(ws, code, message) {
-      let username = getUsername(ws)
-      connected.delete(username)
-      ws.unsubscribe("chat")
+    close(ws, code, message_) {
+      let username = getUsername(ws);
+      connected.delete(username);
+      ws.unsubscribe("chat");
+      
+      let message: Message = {
+        date: new Date(),
+        type: MessageType.INFO,
+        text: `${username} has exited the chat`,
+        username: getUsername(ws)
+      }
+      
+      console.log(Array.from(connected.keys()));
+
+      connected.forEach(socket => {
+        socket.send(JSON.stringify(message))
+      })
+      
+      
+      console.log(username + " Disconnected");
     },
   },
   port: env["PORT"] ?? 3000

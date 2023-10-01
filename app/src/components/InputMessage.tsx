@@ -6,13 +6,14 @@ import { ArrowCircleRight } from 'phosphor-react';
 export interface Props  {
   onEnter?: (content:string) => void
   onChange?: (content:string) => void
+  initialValue?: string
   placeholder?: string
   disabled?: boolean
   ref?: string
 }
 
-function InputMessage({onEnter, disabled, placeholder, ref, onChange}: Props) {
-  const [value, setValue] = useState<string>("");
+function InputMessage({onEnter, disabled, placeholder, ref, onChange, initialValue}: Props) {
+  const [value, setValue] = useState<string>(initialValue ?? "");
   const [rows, setRows] = useState<number>(1);
   
   function trigger(key: React.KeyboardEvent) {
