@@ -22,6 +22,7 @@ function App() {
   let [message, setMessage] = useState<Message[]>([]);
   let [connected, setConnected] = useState(false);
   let [openToast, setOpenToast] = useState(false);
+  let messageContainerRef = useRef(null);
   let [open, setOpen] = useState(true);
 
   async function chat() {
@@ -50,18 +51,6 @@ function App() {
     return user === username;
   }
 
-  useEffect(() => {
-    // Alguma inicialização
-
-    return () => {
-      // Realize ações de limpeza quando o componente for desmontado
-      // Por exemplo, cancelar assinaturas, liberar recursos, etc.
-      if (chatService && connected) {
-        chatService.disconnectChat();
-      }
-    };
-  }, []);
-
   function saveUsername(name: string) {
     chatService.testName(name).then(x => {
       if (x) {
@@ -74,8 +63,26 @@ function App() {
         setOpenToast(true);
       }
     });
-
   }
+
+  useEffect(() => {
+    // Alguma inicialização
+
+    return () => {
+      // Realize ações de limpeza quando o componente for desmontado
+      // Por exemplo, cancelar assinaturas, liberar recursos, etc.
+      if (chatService && connected) {
+        chatService.disconnectChat();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (messageContainerRef.current) {
+      //@ts-ignore
+      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+    }
+  }, [message]);
 
   return (
     <>
@@ -114,7 +121,7 @@ function App() {
             </div>
 
             <div className="h-[calc(100vh-6rem)] p-2 overflow-auto">
-              <div className='h-full w-full overflow-y-auto overflow-x-hidden'>
+              <div className='h-full w-full overflow-y-auto scroll-smooth overflow-x-hidden' ref={messageContainerRef}>
                 <div className='w-full'>
                   {message && message.map((x) => {
                     const key = uuidv4();
