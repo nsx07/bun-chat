@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ChatService } from './services/chat-service';
 import InputMessage from './components/InputMessage';
 import { MessageBox, SystemMessage } from 'react-chat-elements'
 import { v4 as uuidv4 } from 'uuid';
 import { Message, MessageType } from './model/message';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Person, X } from 'phosphor-react';
+import { ArrowsCounterClockwise, Person,  } from 'phosphor-react';
 import * as Toast from '@radix-ui/react-toast';
 import * as rw from "random-words"
 import "./styles/index.css";
@@ -19,7 +19,7 @@ const generateName = () => {
 function App() {
   let [username, setUsername] = useState<string>(chatService.currentUsername()!);
   let [resetUser, setResetUser] = useState(username && username != "");
-  let [message, setMessage] = useState<Message[]>([]);
+  let [message, setMessage] = useState<Message[]>(chatService.restoreMessages());
   let [connected, setConnected] = useState(false);
   let [openToast, setOpenToast] = useState(false);
   let messageContainerRef = useRef(null);
@@ -66,11 +66,7 @@ function App() {
   }
 
   useEffect(() => {
-    // Alguma inicialização
-
     return () => {
-      // Realize ações de limpeza quando o componente for desmontado
-      // Por exemplo, cancelar assinaturas, liberar recursos, etc.
       if (chatService && connected) {
         chatService.disconnectChat();
       }
@@ -96,7 +92,11 @@ function App() {
 
             <div className='sticky rounded-sm top-0 w-full bg-slate-200 text-gray-700 p-2 z-10'>
               <div className='grid grid-cols-3'>
-                <div className='text-left leading-relaxed flex justify-start gap-2 items-center'>
+                <div className='text-left leading-relaxed flex justify-start gap-2 items-center' onClick={() => {
+                  if (!connected) {
+                    chatService.connectChat()
+                  }
+                }}>
                   <span className={clsx("rounded-full border-zinc-100 p-1", { 
                         "bg-green-500": connected, 
                         "bg-red-500": !connected 
@@ -206,8 +206,11 @@ function App() {
 
               <Dialog.DialogContent className="absolute p-6 bg-zinc-900 rounded-2xl w-full max-w-md top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
                 
-                <Dialog.DialogTitle className="text-3xl mb-3 leading-tight text-slate-200 font-extrabold">
-                  BunChat
+                <Dialog.DialogTitle className="text-3xl mb-3 leading-tight text-slate-200 font-extrabold flex gap-2">
+                  BunChat 
+                  <ArrowsCounterClockwise className="cursor-pointer" size={32} onClick={() => {
+                      setUsername(generateName())
+                    }}/>
                 </Dialog.DialogTitle>
 
                 {
@@ -227,7 +230,12 @@ function App() {
                   )
                   : (
                       <>
-                        <InputMessage initialValue={generateName()} onEnter={x => saveUsername(x)} placeholder='Username'></InputMessage>
+                        <label htmlFor="username" className='text-slate-50 font-semibold leading-3'>Username</label>
+                        <InputMessage 
+                          inputId='username' 
+                          initialValue={generateName()}
+                          onEnter={x => saveUsername(x)} 
+                          placeholder='Username' />
                       </>
                   )
                 }

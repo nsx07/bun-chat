@@ -6,8 +6,10 @@ import { Message } from "../model/message";
 export class ChatService {
 
     private socket!: WebSocket;
-    private maxCloseTimeoutMilisBase100 = 100;
     public _isConnect: boolean = false;
+    private maxCloseTimeoutMilisBase100 = 100;
+    private localStorageFlag = this.currentUsername() || v4();
+
     private _onClose: Subject<CloseEvent> = new Subject();
     private _onMessage: Subject<Message> = new Subject<Message>();
     private _messages: BehaviorSubject<Message[]> = new BehaviorSubject(new Array<Message>());
@@ -43,6 +45,34 @@ export class ChatService {
         return "?" + encodeURI(`username=${username}`);
     }
 
+    private getMessages() {
+        return sessionStorage.getItem(this.localStorageFlag)
+    }
+
+    private allocMessage(message: Message) {
+        let previousMessages: string[] | string | null = this.getMessages()
+        let messages: Message[] = []
+
+        if (previousMessages) {
+            messages = Array.from(JSON.parse(previousMessages));
+        }
+
+        messages.push(message);
+        sessionStorage.setItem(this.localStorageFlag, JSON.stringify(messages));
+
+        return messages
+    }
+
+    public restoreMessages(): Message[] {
+        let messages = this.getMessages();
+
+        if (messages) {
+            return Array.from(JSON.parse(messages));
+        }
+
+        return []
+    }
+
     public async connectChat() {
         return new Promise<Observable<Message>>((res, rej) => {
             try {
@@ -54,6 +84,7 @@ export class ChatService {
                     let data: Message;
                     try {
                         data = JSON.parse(ev.data)
+                        this.allocMessage(data);
                         this._onMessage.next(data);
                     } catch (error) {
                         console.error("Error parsing message", ev.data)
