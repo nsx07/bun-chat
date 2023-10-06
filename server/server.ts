@@ -10,7 +10,6 @@ const server = serve({
     let url = new URL(req.url);
     console.log(url.pathname);
     
-    
     if (url.pathname === "/chat") {
       let username = url.searchParams.get("username")
 

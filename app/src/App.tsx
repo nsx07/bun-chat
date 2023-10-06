@@ -17,7 +17,7 @@ const generateName = () => {
 }
 
 function App() {
-  let [username, setUsername] = useState<string>(chatService.currentUsername()!);
+  let [username, setUsername] = useState<string>(chatService.currentUsername()! ?? "");
   let [resetUser, setResetUser] = useState(username && username != "");
   let [message, setMessage] = useState<Message[]>(chatService.restoreMessages());
   let [connected, setConnected] = useState(false);
@@ -232,9 +232,11 @@ function App() {
                       <>
                         <label htmlFor="username" className='text-slate-50 font-semibold leading-3'>Username</label>
                         <InputMessage 
+                          value={username}
                           inputId='username' 
                           initialValue={generateName()}
                           onEnter={x => saveUsername(x)} 
+                          onChange={setUsername}
                           placeholder='Username' />
                       </>
                   )
