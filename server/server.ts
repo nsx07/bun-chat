@@ -1,5 +1,4 @@
 import { ServerWebSocket, env, serve } from "bun";
-import { ChatMessage, MessageType } from "../shared/model/message";
 import { chatRoute } from "./routes/chat";
 import { defaultHeaders } from "./core/headers";
 import { userRoute } from "./routes/user";

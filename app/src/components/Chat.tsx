@@ -3,7 +3,7 @@ import { ChatService } from '../services/chat-service';
 import { useEffect, useRef, useState } from 'react';
 import { Person } from 'phosphor-react';
 import { MessageBox, SystemMessage } from 'react-chat-elements';
-import { ChatMessage, MessageType } from '../../../shared/model/message';
+import { ChatMessage, MessageType } from '../model/message';
 import InputMessage from './InputMessage';
 import { v4 as uuidv4 } from 'uuid';
 

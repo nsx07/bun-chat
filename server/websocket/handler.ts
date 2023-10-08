@@ -1,6 +1,7 @@
 import { ServerWebSocket } from "bun";
-import { ChatMessage, MessageBase, MessageType } from "../../shared/model/message";
+
 import { connected } from "../server";
+import { ChatMessage, MessageType, MessageBase } from "../model/message";
 
 const getUsername = (ws: ServerWebSocket<any>) => ws.data.username;
 

@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable, Subject } from "rxjs";
 import { endpoints } from "../env/environment";
 import { v4 } from "uuid"
-import { ChatMessage, MessageBase, MessageType } from "../../../shared/model/message";
+import { ChatMessage, MessageBase, MessageType } from "../model/message";
 
 export class ChatService {
 
