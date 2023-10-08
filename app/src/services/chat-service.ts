@@ -1,37 +1,46 @@
 import { BehaviorSubject, Observable, Subject } from "rxjs";
 import { endpoints } from "../env/environment";
 import { v4 } from "uuid"
-import { Message } from "../model/message";
+import { ChatMessage, MessageBase, MessageType } from "../../../shared/model/message";
 
 export class ChatService {
 
     private socket!: WebSocket;
-    public _isConnect: boolean = false;
+    private _isConnect: boolean = false;
     private maxCloseTimeoutMilisBase100 = 100;
-    private localStorageFlag = this.currentUsername() || v4();
-
+    private _connectedUsers: string[] = [];
     private _onClose: Subject<CloseEvent> = new Subject();
-    private _onMessage: Subject<Message> = new Subject<Message>();
-    private _messages: BehaviorSubject<Message[]> = new BehaviorSubject(new Array<Message>());
+    private _onMessage: Subject<ChatMessage> = new Subject<ChatMessage>();
+    private _messages: BehaviorSubject<ChatMessage[]> = new BehaviorSubject(new Array<ChatMessage>());
+    
+    //#region GETTERS
 
-    get onMessage() {
+    public get onMessage() {
         return this._onMessage.asObservable();
     }
 
-    get onClose() {
+    public get onClose() {
         return this._onClose.asObservable();
     }
 
-    get isConnect() {
+    public get isConnect() {
         return this._isConnect;
     }
 
-    get messages() {
+    public get messages() {
         return this._messages.getValue();
+    }
+
+    public get connectedUsers() {
+        return this._connectedUsers;
     }
 
     public currentUsername() {
         return sessionStorage.getItem("username");
+    }
+
+    private get localStorageFlag () {
+        return this.currentUsername()!;
     }
 
     private get params() {
@@ -49,9 +58,13 @@ export class ChatService {
         return sessionStorage.getItem(this.localStorageFlag)
     }
 
-    private allocMessage(message: Message) {
+    //#endregion
+
+    //#region Messages
+
+    private allocMessage(message: MessageBase) {
         let previousMessages: string[] | string | null = this.getMessages()
-        let messages: Message[] = []
+        let messages: MessageBase[] = []
 
         if (previousMessages) {
             messages = Array.from(JSON.parse(previousMessages));
@@ -63,7 +76,7 @@ export class ChatService {
         return messages
     }
 
-    public restoreMessages(): Message[] {
+    public restoreMessages(): ChatMessage[] {
         let messages = this.getMessages();
 
         if (messages) {
@@ -73,23 +86,24 @@ export class ChatService {
         return []
     }
 
+    //#endregion
+
+    //#region Actions
+
     public async connectChat() {
-        return new Promise<Observable<Message>>((res, rej) => {
+        return new Promise<Observable<MessageBase>>((res, rej) => {
             try {
-                this.socket = new WebSocket(endpoints.apiWs + "/chat" + this.params);
+                this.socket = new WebSocket(endpoints.apiWs + "/chat/connect" + this.params);
                 
-                this.socket.onopen = () => res(this.onMessage)
-                this.socket.onclose = (ev) => this._onClose.next(ev)
-                this.socket.onmessage = (ev) => {
-                    let data: Message;
-                    try {
-                        data = JSON.parse(ev.data)
-                        this.allocMessage(data);
-                        this._onMessage.next(data);
-                    } catch (error) {
-                        console.error("Error parsing message", ev.data)
-                    }
+                this.socket.onopen = () => {
+                    console.log("open");
+                    
+                    res(this.onMessage)
+                    this.onConnect();
                 }
+
+                this.socket.onclose = (ev) => this.onDisconnect(ev)
+                this.socket.onmessage = (ev) => this.__onMessage(ev)
 
             } catch (error) {
                 rej(error)
@@ -134,9 +148,8 @@ export class ChatService {
     }
 
     public testName(name: string) {
-        return new Promise<boolean>((res, rej) => {
-
-            fetch(endpoints.apiHttp + "/testName?username=" + name)
+        return new Promise<boolean>((res) => {
+            fetch(endpoints.apiHttp + "/user/testName?username=" + name)
                 .then(result => result.json())
                 .then(x => {
                     if (x.inUse) {
@@ -144,9 +157,44 @@ export class ChatService {
                     } else {
                         res(true)
                     }
-                })
+            })
 
         })  
     }
+
+    //#endregion
+
+    //#region EVENTS
+
+    private onDisconnect(ev: CloseEvent) {
+        this._isConnect = false;
+        this._onClose.next(ev);
+    }
+
+    private onConnect() {
+        this._isConnect = true;
+    }
+
+    private __onMessage(ev: MessageEvent) {
+        let data: MessageBase;
+        try {
+            data = JSON.parse(ev.data)
+            console.log(data);
+            
+
+            if (data.type === MessageType.ONLINE) {
+                this._connectedUsers = [JSON.parse(data.text)];
+                return;
+            }
+
+
+            this.allocMessage(data);
+            this._onMessage.next(data as ChatMessage);
+        } catch (error) {
+            console.error("Error parsing message", ev.data)
+        }
+    }
+
+    //#endregion
 
 }

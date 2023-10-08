@@ -1,51 +1,53 @@
 import clsx from 'clsx';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ArrowCircleRight } from 'phosphor-react';
+import { validInputText } from '../../../shared/utils/utils';
 
 
 export interface Props  {
-  onChange?: (content:string) => void
   onEnter?: (content:string) => void
+  onChange?: (content:string) => void
   initialValue?: string
-  value?: string
   placeholder?: string
   disabled?: boolean
+  ref?: string
   inputId?: string
 }
 
-function InputMessage({onEnter, disabled, placeholder, onChange, value, initialValue, inputId}: Props) {
-  const [_value, _setValue] = useState<string>(initialValue ?? "");
+function InputMessage({onEnter, disabled, placeholder, ref, onChange, initialValue, inputId}: Props) {
+  const [value, setValue] = useState<string>(initialValue ?? "");
   const [rows, setRows] = useState<number>(1);
   
   function trigger(key: React.KeyboardEvent) {
+    ref = value;
     if (key.code === "Enter" && onEnter) {
       dispatchValue();
-      
-    } else {
-      let rows = 1;
-      
-      if (key) {
-        const scroll = key.currentTarget.scrollHeight;
-        rows = Math.min(Math.ceil(scroll / 24), 3);
-      }
+      onChange_();
     }
-
-
-    setRows(_value.length > 1 ? rows : 1);
   }
 
   function dispatchValue() {
-    if (onEnter) {
-      _setValue(""); 
-      onEnter(_value);
+    if (onEnter && validInputText(value)) {
+      setValue(""); 
+      onEnter(value);
     }
   }
 
-  useEffect(() => {
-    _setValue(value!);
-    if (value && value !== _value) {
+  function onChange_(ev?: React.KeyboardEvent) {
+    let rows = 1;
+    
+    if (ev) {
+      const scroll = ev.currentTarget.scrollHeight;
+      rows = Math.min(Math.ceil(scroll / 24), 3);
     }
-  }, [value]);
+
+    setRows(value.length > 1 ? rows : 1);
+
+    if (onChange) {
+      onChange(value);
+    }
+  }
+ 
 
   return (
     <>        
@@ -62,15 +64,15 @@ function InputMessage({onEnter, disabled, placeholder, onChange, value, initialV
           onLoad={() => setRows(1)}
           onKeyUp={(x) => trigger(x)}
           onChange={(x) => {
-            _setValue(x.target.value.replace("\n", ""))
-            onChange && onChange(_value)
+            setValue(x.target.value.replace("\n", ""))
+            onChange && onChange(value)
           }}
           
           className="resize-none border-transparent bg-transparent flex-1 appearance-none border text-gray-700 placeholder-gray-400 text-base focus:outline-none focus:ring-0 focus:ring-purple-600 focus:border-transparent"
           />
         
-        <div className={clsx("rounded-lg right-1 cursor-pointer", { 'text-slate-600': !disabled, 'text-gray-500': disabled })}>
-          <ArrowCircleRight size={28} onClick={() => dispatchValue()}/>
+        <div className={clsx("rounded-lg right-1 cursor-pointer text-slate-600", { 'opacity-60': disabled || !validInputText(value) })}>
+          <ArrowCircleRight size={28} onClick={() => validInputText(value) && dispatchValue()}/>
         </div>
         
       </div>

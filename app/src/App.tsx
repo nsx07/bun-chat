@@ -1,15 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { ChatService } from './services/chat-service';
-import InputMessage from './components/InputMessage';
-import { MessageBox, SystemMessage } from 'react-chat-elements'
-import { v4 as uuidv4 } from 'uuid';
-import { Message, MessageType } from './model/message';
 import * as Dialog from '@radix-ui/react-dialog';
-import { ArrowsCounterClockwise, Person,  } from 'phosphor-react';
+import { ArrowsCounterClockwise,  } from 'phosphor-react';
 import * as Toast from '@radix-ui/react-toast';
 import * as rw from "random-words"
 import "./styles/index.css";
-import clsx from 'clsx';
+import Input from './components/Input';
+import Chat from './components/Chat';
 
 const chatService = new ChatService();
 const generateName = () => {
@@ -19,66 +16,32 @@ const generateName = () => {
 function App() {
   let [username, setUsername] = useState<string>(chatService.currentUsername()! ?? "");
   let [resetUser, setResetUser] = useState(username && username != "");
-  let [message, setMessage] = useState<Message[]>(chatService.restoreMessages());
-  let [connected, setConnected] = useState(false);
   let [openToast, setOpenToast] = useState(false);
-  let messageContainerRef = useRef(null);
+  let [loading, setLoading] = useState(false);
   let [open, setOpen] = useState(true);
 
-  async function chat() {
-    await chatService.connectChat();
-
-    setConnected(true);
-
-    chatService.onMessage.subscribe(x => {
-      console.log(x);
-      
-      message = [...message, x]      
-      setMessage(message);
-    })
-
-    chatService.onClose.subscribe(() => {
-      setConnected(false);
-    })
-    
-  }
-
-  function handlePress(message: string) {
-    chatService.sendMessage(message)
-  }
-
-  function itsMy(user:string) {
-    return user === username;
-  }
 
   function saveUsername(name: string) {
-    chatService.testName(name).then(x => {
+    setLoading(true);
+    chatService.testName(name).then(async x => {
       if (x) {
+
+        console.log(x);
+        
         sessionStorage.setItem("username", name.trimEnd());
         setUsername(name.trimEnd());
-        chat().then(() => {
-          setOpen(false);
-        });
+
+        await chatService.connectChat();
+        console.log(chatService.isConnect);
+        
+        setLoading(false);
+        setOpen(false);
       } else {
         setOpenToast(true);
       }
+    }).finally(() => {
     });
   }
-
-  useEffect(() => {
-    return () => {
-      if (chatService && connected) {
-        chatService.disconnectChat();
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (messageContainerRef.current) {
-      //@ts-ignore
-      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
-    }
-  }, [message]);
 
   return (
     <>
@@ -90,93 +53,7 @@ function App() {
 
           <div className='md:w-1/2 sm:w-2/3 w-[calc(100%)] relative bg-slate-950 z-10'>
 
-            <div className='sticky rounded-sm top-0 w-full bg-slate-200 text-gray-700 p-2 z-10'>
-              <div className='grid grid-cols-3'>
-                <div className='text-left leading-relaxed flex justify-start gap-2 items-center' onClick={() => {
-                  if (!connected) {
-                    chatService.connectChat()
-                  }
-                }}>
-                  <span className={clsx("rounded-full border-zinc-100 p-1", { 
-                        "bg-green-500": connected, 
-                        "bg-red-500": !connected 
-                       })}>
-                  </span>
-                  
-                  <span className='font-semibold'>
-                    {connected ? "online" : "offline"}
-                  </span>
-                </div>
-                <div className='text-center leading-relaxed'>
-                  <span className='font-semibold leading-relaxed'>BunChat</span>
-                </div>
-                <div className='text-right leading-relaxed flex justify-end gap-2 items-center'>
-                  <span className='font-semibold'>{
-                    username ? username : ""
-                  }</span>
-                  <Person />
-                </div>
-              </div>
-            
-            </div>
-
-            <div className="h-[calc(100vh-6rem)] p-2 overflow-auto">
-              <div className='h-full w-full overflow-y-auto scroll-smooth overflow-x-hidden' ref={messageContainerRef}>
-                <div className='w-full'>
-                  {message && message.map((x) => {
-                    const key = uuidv4();
-                    
-                    return (
-                      <div key={`${key}`}>
-
-                        {x.type === MessageType.TEXT ? (
-                          <MessageBox
-                              id={key}
-                              text={x.text}
-                              notch={true}
-                              
-                              focus={false}
-                              type={"text"}
-                              date={x.date}
-                              status={'sent'}
-                              forwarded={false}
-                              retracted={false}
-                              title={x.username}
-                              replyButton={false}
-                              titleColor={'#000'}
-                              removeButton={false}
-                              position={itsMy(x.username) ? "right" : "left"}
-                            />
-                          ) : (
-                          <SystemMessage 
-                              id={key}
-                              notch={true}
-                              text={x.text}
-                              focus={false}
-                              type={"text"}
-                              date={x.date}
-                              status={'sent'}
-                              forwarded={false}
-                              retracted={false}
-                              title={x.username}
-                              replyButton={false}
-                              titleColor={'#000'}
-                              removeButton={false}
-                              position={"center"}/>
-                          )}
-
-
-                      </div>
-                      
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-
-            <div className='absolute bottom-0 w-full p-2 bg-opacity-50 bg-slate-'>
-              <InputMessage onEnter={(message) => handlePress(message)} disabled={!connected}></InputMessage>
-            </div>
+            <Chat ready={!open} chatService={chatService}/>
             
           </div>
 
@@ -200,7 +77,7 @@ function App() {
           <Toast.Viewport className="ToastViewport" />
         </Toast.Provider>
 
-        <Dialog.Root open={open} onOpenChange={() => username && username != "" ? saveUsername(username): void 0} modal={true}>
+        <Dialog.Root open={open} onOpenChange={() => null} modal={true}>
             <Dialog.Portal >
               <Dialog.DialogOverlay className="w-screen h-screen bg-black/80 fixed inset-0 cursor-not-allowed" onClick={(x) => x.preventDefault()}/>
 
@@ -231,13 +108,13 @@ function App() {
                   : (
                       <>
                         <label htmlFor="username" className='text-slate-50 font-semibold leading-3'>Username</label>
-                        <InputMessage 
-                          value={username}
-                          inputId='username' 
-                          initialValue={generateName()}
-                          onEnter={x => saveUsername(x)} 
-                          onChange={setUsername}
-                          placeholder='Username' />
+                          <Input
+                            disabled={loading}
+                            onEnter={x => saveUsername(x)} 
+                            onChange={setUsername}
+                            valor={username}
+                            inputId='username'
+                          />
                       </>
                   )
                 }
