@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import React, { useState } from 'react';
 import { ArrowCircleRight } from 'phosphor-react';
-import { validInputText } from '../../../shared/utils/utils';
+import { validInputText } from '../utils/utils';
 
 
 export interface Props  {

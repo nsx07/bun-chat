@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { ArrowCircleRight } from 'phosphor-react';
 import { ChangeEvent } from 'react';
-import { validInputText } from '../../../shared/utils/utils';
+import { validInputText } from '../utils/utils';
 
 export interface Props {
     icon?: boolean
