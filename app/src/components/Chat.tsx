@@ -1,4 +1,4 @@
-import clsx from 'clsx';
+ import clsx from 'clsx';
 import { ChatService } from '../services/chat-service';
 import { useEffect, useRef, useState } from 'react';
 import { Person } from 'phosphor-react';
@@ -91,7 +91,7 @@ function Chat({chatService, ready}: Props) {
         <div className='text-center leading-relaxed'>
           <span className='font-semibold leading-relaxed'>BunChat</span>
         </div>
-        <div className='leading-relaxed text-sm max-w-2xl overflow-ellipsis whitespace-nowrap'>
+        <div className='leading-relaxed text-sm overflow-hidden max-w-2xl overflow-ellipsis whitespace-nowrap'>
           {
             ready 
             ? (
