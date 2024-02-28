@@ -22,7 +22,7 @@ function InputMessage({onEnter, disabled, placeholder, ref, onChange, initialVal
     ref = value;
     if (key.code === "Enter" && onEnter) {
       dispatchValue();
-      onChange_();
+      onChange_(key);
     }
   }
 

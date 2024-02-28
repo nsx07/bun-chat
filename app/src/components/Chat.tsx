@@ -111,7 +111,7 @@ function Chat({chatService, ready}: Props) {
   
   </div>
 
-  <div className="h-[calc(100vh-6rem)] p-2 overflow-auto">
+  <div className="h-[calc(100vh-7rem)] p-2 overflow-auto">
     <div className='h-full w-full overflow-y-auto scroll-smooth overflow-x-hidden' ref={messageContainerRef}>
       <div className='w-full'>
         {message && message.map((x) => {
