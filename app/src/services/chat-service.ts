@@ -116,7 +116,7 @@ export class ChatService {
         this._pinger = setInterval(() => {
             this.socket.send("ping")
             console.log('ping')
-        }, 35000);
+        }, 45000);
     }
 
     public async disconnectChat() {
