@@ -23,6 +23,12 @@ export function openHandler(ws: ServerWebSocket<any>) {
 }
 
 export function messageHandler(ws: ServerWebSocket<any>, messageText: string) {
+    
+    if (messageText == "ping") {
+      ws.send("pong");
+      return;
+    }
+  
     let message: ChatMessage = {
       date: new Date(),
       type: MessageType.TEXT,

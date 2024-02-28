@@ -5,10 +5,11 @@ import { ChatMessage, MessageBase, MessageType } from "../model/message";
 
 export class ChatService {
 
+    private _pinger: number
     private socket!: WebSocket;
     private _isConnect: boolean = false;
-    private maxCloseTimeoutMilisBase100 = 100;
     private _connectedUsers: string[] = [];
+    private maxCloseTimeoutMilisBase100 = 100;
     private _onClose: Subject<CloseEvent> = new Subject();
     private _onMessage: Subject<ChatMessage> = new Subject<ChatMessage>();
     private _messages: BehaviorSubject<ChatMessage[]> = new BehaviorSubject(new Array<ChatMessage>());
@@ -111,11 +112,19 @@ export class ChatService {
         });
     }
 
+    private pinger() {
+        this._pinger = setInterval(() => {
+            this.socket.send("ping")
+            console.log('ping')
+        }, 3500);
+    }
+
     public async disconnectChat() {
         if (!this.socket) {
             return;
         }
 
+        clearInterval(this._pinger);
 
         return new Promise((res, rej) => {
             try {
@@ -177,16 +186,20 @@ export class ChatService {
 
     private __onMessage(ev: MessageEvent) {
         let data: MessageBase;
+
+        if (ev.data == "pong") {
+            console.log(ev.data)
+            return;
+        }
+
         try {
             data = JSON.parse(ev.data)
             console.log(data);
             
-
             if (data.type === MessageType.ONLINE) {
                 this._connectedUsers = [JSON.parse(data.text)];
                 return;
             }
-
 
             this.allocMessage(data);
             this._onMessage.next(data as ChatMessage);
