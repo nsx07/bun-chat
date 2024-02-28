@@ -34,12 +34,12 @@ function App() {
         await chatService.connectChat();
         console.log(chatService.isConnect);
         
-        setLoading(false);
         setOpen(false);
       } else {
         setOpenToast(true);
       }
     }).finally(() => {
+      setLoading(false);
     });
   }
 
